@@ -20,6 +20,14 @@ Vagrant.configure(2) do |config|
         mgr.vm.network :forwarded_port, guest: 22, host: 5555, auto_correct: true
         mgr.vm.provision  "shell", path: "ansible.sh"
     end
+    config.vm.define "lb" do |lb|
+        lb.vm.hostname = "lb.dev"
+        lb.vm.network :private_network, ip: "192.168.2.6"
+        lb.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", disabled: true
+        lb.vm.network :forwarded_port, guest: 22, host: 6666, auto_correct: true
+        lb.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+        lb.vm.provision "shell", path: "haproxy.sh"
+    end
 
 
 end

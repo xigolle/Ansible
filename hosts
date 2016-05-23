@@ -11,9 +11,13 @@ www2
 [mgr]
 localhost
 
+[lb]
+192.168.2.6
+
 [all:children]
 webservers
 mgr
+lb
 
 [all:vars]
 ansible_connection=ssh 
