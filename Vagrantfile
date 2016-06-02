@@ -1,4 +1,8 @@
 Vagrant.configure(2) do |config|
+
+#vbguest plugin fails on my machine so that is why these commands are here
+config.vbguest.auto_update = false
+config.vbguest.no_remote = true
     config.vm.box = "ubuntu/trusty64"
     config.ssh.insert_key = false
     config.vm.define "www1" do |www1|
