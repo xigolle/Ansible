@@ -1,36 +1,39 @@
 Vagrant.configure(2) do |config|
-
-#vbguest plugin fails on my machine so that is why these commands are here
-config.vbguest.auto_update = false
+  config.vbguest.auto_update = false
 config.vbguest.no_remote = true
     config.vm.box = "ubuntu/trusty64"
     config.ssh.insert_key = false
-    config.vm.define "www1" do |www1|
-        www1.vm.hostname = "www1.dev"
-        www1.vm.network :private_network, ip: "192.168.2.2"
-        www1.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", disabled: true
-        www1.vm.network :forwarded_port, guest: 22, host: 3333, auto_correct: true
+    config.vm.provider "virtualbox" do |v|
+        v.memory = 384
+        v.cpus = 2
+    end 
+                                            
+     (1..2).each do |i|
+    config.vm.define "web#{i}" do |node|
+        node.vm.box = "ubuntu/trusty64"
+        node.vm.hostname = "web#{i}"
+        node.vm.network :private_network, ip: "10.0.15.2#{i}"
+        node.vm.network "forwarded_port", guest: 80, host: "808#{i}"
+        
     end
-    config.vm.define "www2" do |www2|
-        www2.vm.hostname = "www2.dev"
-        www2.vm.network :private_network, ip: "192.168.2.4"
+  end
+
+
+    config.vm.define "rp" do |www2|
+        www2.vm.hostname = "rp.dev"
+        www2.vm.network :private_network, ip: "192.168.2.5"
         www2.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", disabled: true
-        www2.vm.network :forwarded_port, guest: 22, host: 4444, auto_correct: true
+        www2.vm.network :forwarded_port, guest: 22, host: 5555, auto_correct: true
+        www2.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+        p
     end
+
     config.vm.define "mgr" do |mgr|
         mgr.vm.hostname = "mgr.dev"
-        mgr.vm.network :private_network, ip: "192.168.2.5"
+        mgr.vm.network :private_network, ip: "192.168.2.6"
         mgr.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", disabled: true
-        mgr.vm.network :forwarded_port, guest: 22, host: 5555, auto_correct: true
+        mgr.vm.network :forwarded_port, guest: 22, host: 6666, auto_correct: true
         mgr.vm.provision  "shell", path: "ansible.sh"
-    end
-    config.vm.define "lb" do |lb|
-        lb.vm.hostname = "lb.dev"
-        lb.vm.network :private_network, ip: "192.168.2.6"
-        lb.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", disabled: true
-        lb.vm.network :forwarded_port, guest: 22, host: 6666, auto_correct: true
-        lb.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
-        lb.vm.provision "shell", path: "haproxy.sh"
     end
 
 
