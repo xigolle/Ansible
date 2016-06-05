@@ -1,0 +1,37 @@
+- hosts: webservers
+  sudo: yes
+  serial: 1
+
+  pre_tasks:
+      - name: Disable server in HAProxy.
+        shell: echo "disable server Ansible/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
+        delegate_to: lb
+
+  tasks:
+      - name: Installing NginX
+        apt: name={{ item }} state=present update_cache=yes
+        with_items:
+          - nginx
+
+      - name: Make sure nginx is started and configure it to run at boot.
+        service: name=nginx state=started enabled=yes
+
+      - name: Write our nginx.conf.
+        template: src=templates/nginx.conf.j2 dest=/etc/nginx/nginx.conf
+        notify: restart nginx
+
+      - name: Write our /etc/nginx/sites-available/default.
+        template: src=templates/default-site.j2 dest=/etc/nginx/sites-available/default
+        notify: restart nginx
+
+      - name: Deploy website content.
+        template: src=templates/index.html.j2 dest=/usr/share/nginx/html/index.html
+
+  handlers:
+      - name: restart nginx
+        service: name=nginx state=restarted
+
+  post_tasks:
+      - name: Enable server in HAProxy.
+        shell: echo "enable server Ansible/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
+        delegate_to: lb

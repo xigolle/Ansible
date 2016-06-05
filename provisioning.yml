@@ -1,0 +1,54 @@
+---
+
+# webservers
+- hosts: webservers
+  sudo: yes
+
+  tasks:
+
+      - name: Install nginx.
+        apt: name={{ item }} state=present update_cache=yes
+        with_items:
+          - nginx
+
+      - name: Make sure nginx is started and configure it to run at boot.
+        service: name=nginx state=started enabled=yes
+
+      - name: Write our nginx.conf.
+        template: src=templates/nginx.conf.j2 dest=/etc/nginx/nginx.conf
+        notify: restart nginx
+
+      - name: Write our /etc/nginx/sites-available/default.
+        template: src=templates/default-site.j2 dest=/etc/nginx/sites-available/default
+        notify: restart nginx
+
+      - name: Deploy website content.
+        template: src=templates/index.html.j2 dest=/usr/share/nginx/html/index.html
+
+  handlers:
+      - name: restart nginx
+        service: name=nginx state=restarted
+
+# loadbalancer
+- hosts: lb
+  sudo: yes
+
+  tasks:
+      - name: Install HAProxy and socat.
+        apt: name={{ item }} state=present update_cache=yes
+        with_items:
+          - haproxy
+          - socat
+
+      - name: enable haproxy
+        lineinfile: dest=/etc/default/haproxy regexp="^ENABLED" line="ENABLED=1"
+        notify: restart haproxy 
+
+      - name: deploy haproxy config
+        template: src=templates/haproxy.cfg.j2 dest=/etc/haproxy/haproxy.cfg
+        notify: restart haproxy
+
+  handlers:
+      - name: restart haproxy
+        service: name=haproxy state=restarted	
+

@@ -1,25 +1,23 @@
 [www1]
-192.168.2.3
+www1
 
 [www2]
-192.168.2.4
+www2
 
 [webservers:children]
 www1
 www2
 
-[rp]
-192.168.2.5
-
-[mgr]
-192.168.2.6
+[lb]
+lb
 
 [all:children]
 webservers
-mgr
-rp
+lb
 
 [all:vars]
 ansible_connection=ssh 
 ansible_ssh_user=vagrant 
 ansible_ssh_pass=vagrant
+#necessary because I couldn't ssh into the webservers or the loadbalancer using the playbook
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

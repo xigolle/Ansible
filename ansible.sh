@@ -1,29 +1,36 @@
 #!/usr/bin/env bash
+
 apt-get -y install software-properties-common
 apt-add-repository -y ppa:ansible/ansible
 apt-get update
-apt-get -y install ansible
+apt-get -y install ansible sshpass
+
 
 ln -sf /vagrant/hosts /etc/ansible/hosts
 
 
-KNOW_HOSTS_FILE="/home/vagrant/.ssh/known_hosts"
 
-[ -f "$KNOW_HOSTS_FILE" ] && rm $KNOW_HOSTS_FILE 
 
-ssh-keyscan 192.168.2.3 >> $KNOW_HOSTS_FILE 
-ssh-keyscan 192.168.2.4 >> $KNOW_HOSTS_FILE
-ssh-keyscan 192.168.2.5 >> $KNOW_HOSTS_FILE
-ssh-keyscan 192.168.2.6 >> $KNOW_HOSTS_FILE
-chown vagrant:vagrant $KNOW_HOSTS_FILE 
+rm /home/vagrant/.ssh/known_hosts
 
 cat >> /etc/hosts <<EOL
-#vagrant environment nodes
-192.168.2.5 rp
-192.168.2.6 mgr
+# vagrant environment nodes
+192.168.2.6  mgmt
+192.168.2.5  lb
 192.168.2.11 www1
-192.168.2.12 www2
+10.0.15.12 www2
+
 EOL
-# TODO: ssh-keyscan can be replaced if a playbook is created that copies the
-# files, ssh-agent needs to be implemented as wel.
+
+ssh-keyscan lb >> /home/vagrant/.ssh/known_hosts
+ssh-keyscan www1 >> /home/vagrant/.ssh/known_hosts
+ssh-keyscan www2 >> /home/vagrant/.ssh/known_hosts
+ssh-keyscan mgr >> /home/vagrant/.ssh/known_hosts
+
+chown vagrant:vagrant /home/vagrant/.ssh/known_hosts
+
+#to start the provisioning right 
+ansible-playbook /vagrant/provisioning.yml
+
+
 
